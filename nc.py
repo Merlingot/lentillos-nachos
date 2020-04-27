@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 
-def search(surface, d, h, L, cam1, cam2, ecran):
+def search(surface, d, h, L, eps, cam1, cam2, ecran):
     """
     Find the position (vector p_min) and value (min) of the minimum on each point of the grid
     Args:
@@ -45,11 +45,17 @@ def search(surface, d, h, L, cam1, cam2, ecran):
             point.vecU2[n]=u2; point.vecE2[n]=e2;
             p += h*d
             n+=1
-
+            
+        p_minus = p_min - h*d
+        p_plus = p_min + h*d
+#        print("p_min avant ternary",p_min)
+        p_min, val_min, _= ternary_search(p_minus, p_plus, d, eps, cam1, cam2, ecran)
+#        print("p_min après ternary",p_min)
+       
         # Enregistrer les valeurs minimales du point
         point.pmin=p_min; point.valmin=val_min; point.indexmin=index_min
         point.nmin=n_min
-        # Arranger les vecteur pour enlever les NaN:
+        # Arranger les vecteurs pour enlever les NaN:
         point.vecV=point.vecV[point.vecB]
         point.vecP=point.vecP[point.vecB]
         point.vecN1 = point.vecN1[point.vecB];
@@ -97,7 +103,7 @@ def normal_at(P, cam, ecran):
     """
     # Avoir le pixel de camera qui voit P
     pixCam = cam.projectPoint( P ) #[u,v,1]
-    # print(pixCam)
+#    print("camera",cam.w,"pixCam",pixCam)
     if isinstance(pixCam, np.ndarray): # Sur CCD ?
         # Appliquer la SGMF
         pixEcran = cam.SGMF(pixCam) #[u,v,1]
@@ -110,6 +116,50 @@ def normal_at(P, cam, ecran):
             return None, None, None
     else:
         return None, None, None
+
+def ternary_search(p_minus, p_plus, d, eps, cam1, cam2, ecran):
+    """
+    Ternary search for the minimum of inconsistency m calculated between two points
+    p_minus and p_plus until. Precision eps on the distance between
+    Args:
+        p_minus, p_plus = np.array([x,y,z])
+        cam1, cam2 : measurements nb. 1 and 2
+    Returns:
+        New minimum inconsistency value, new point, new normal associated
+    """
+    
+    p1 = p_minus
+    p4 = p_plus
+    _, val1, _, _, _, _, _, _ = evaluatePoint(p1, cam1, cam2, ecran)
+    _, val4, _, _, _, _, _, _ = evaluatePoint(p4, cam1, cam2, ecran)
+    h = np.linalg.norm(p4 - p1)
+    if isinstance(val1,np.float) and isinstance(val4,np.float) :
+        while h > eps:
+#            print("h = ",h)
+            p2 = p1 + 1/3*h*d
+            p3 = p4 - 1/3*h*d
+            _, val2, _, _, _, _, _, _ = evaluatePoint(p2, cam1, cam2, ecran)
+            _, val3, _, _, _, _, _, _ = evaluatePoint(p3, cam1, cam2, ecran)
+#            print("val2",val2)
+    #        print("p2",p2)
+    #        print("evaluatePoint(p2, cam1, cam2, ecran)",evaluatePoint(p4, cam1, cam2, ecran))
+    #        print("normal_at(homogene(p2), cam1, ecran)",normal_at(homogene(p4), cam1, ecran))
+    #        print("normal_at(homogene(p2), cam2, ecran)",normal_at(homogene(p4), cam2, ecran))
+    #        print("cam1.projectPoint( homogene(pmin) )",cam1.projectPoint( (p_minus+p_plus)/2 ))
+    #        print("cam2.projectPoint( homogene(p4) )",cam2.projectPoint( homogene(p4) ))
+    #        
+            if isinstance(val2,np.float) and isinstance(val3,np.float) :
+                if val2 > val3:
+                    p1 = p2
+    #                print("augmente p1")
+                else:
+                    p4 = p3
+    #                print("diminue p4")
+                h = np.linalg.norm(p4 - p1)
+#            print("ternary search h = ",h)
+    p_min = (p1 + p4)/2
+    _, val_min, _, _, _, _, _, _ = evaluatePoint(p_min, cam1, cam2, ecran)
+    return p_min, val_min, evaluatePoint(p_min, cam1, cam2, ecran) 
 
 def homogene(vec):
     """ np.array([x,y,z]) -> np.array([x,y,z,1])   """

@@ -374,6 +374,7 @@ def show_sgmf(cam1, cam2, point):
         ax2.scatter( pt[0], pt[1], color='g')
 
     ax3.plot(point.vecP[:,2], point.vecV, '-o', color='b')
+    ax3.plot(point.pmin[2],point.valmin,'x',color = 'r')
 
     ax4.set_aspect('equal', 'box')
     ax4.axhline(0); ax4.axhline(900)

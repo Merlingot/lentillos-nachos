@@ -14,9 +14,13 @@ def confidenceMap(sgmf, name):
     ## (1) read and extract the blue channel
     img = cv2.imread(sgmf)
     # uncomment for pre-blurring
-#    img = cv2.medianBlur(img,5)
-    red = img[:,:,1]
-    green = img[:,:,2]
+#    img = cv2.medianBlur(img,3)
+
+    
+    red = img[:,:,1]     # CHANNEL Y
+    green = img[:,:,2]   # CHANNEL X
+
+    
 
     # Adaptive Thresholding
     green2 = cv2.adaptiveThreshold(green, 255,
@@ -29,18 +33,41 @@ def confidenceMap(sgmf, name):
 
     edgeImgG = np.max( np.array([ edgedetect(red2) ]), axis=0 )
     edgeImgR = np.max( np.array([ edgedetect(green2) ]), axis=0 )
+    
 
     edgeImgR[edgeImgR <= np.mean(edgeImgR)] = 0;
     edgeImgG[edgeImgG <= np.mean(edgeImgG)] = 0;
 
     # Blur the image
     # changer le (21,21)PG en (7,7)AV
-    maskimg = cv2.GaussianBlur(edgeImgG,(7,7),0)*cv2.GaussianBlur(edgeImgR,(7,7),0)
+    maskimg = cv2.bilateralFilter(edgeImgR,5,75,75)*cv2.bilateralFilter(edgeImgG,5,75,75)
+    
+
 
     maskimg = 255 - maskimg * 255
-    cv2.imwrite(name, maskimg)
+    plt.imshow(maskimg)
+    plt.show()
+    
+    from scipy.ndimage import maximum_filter, minimum_filter
+    def midpoint(img):
+        maxf = maximum_filter(img, (51, 51))
+        minf = minimum_filter(img, (51, 51))
+        midpoint = (maxf + minf) / 2
+        midpoint[midpoint < 0] = 0
+        return midpoint
+    plt.imshow(midpoint(maskimg))
+    plt.show()
+    
+#    cv2.imwrite(name, midpoint(maskimg))
 
 
 
+echantillon = "miroir_plan"
+camera = "AV"
+confidenceMap('./data/'+ echantillon +'/cam_match_' + camera + '.png', './data/'+ echantillon +'/extremeconf_' + camera + '.png')
 
-confidenceMap('./data/miroir_plan/cam_match_AV.png', './data/miroir_plan/quadrupleconf_AV.png')
+#blur1 = cv2.medianBlur(cv2.imread(sgmf1,-1),5)
+#blur2 = cv2.medianBlur(cv2.imread(sgmf2,-1),5)
+#
+#cv2.imwrite("./data/" + echantillon + "/cam_match_median_PG.png", blur1)
+#cv2.imwrite("./data/" + echantillon + "/cam_match_median_AV.png", blur2)
