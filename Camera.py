@@ -23,11 +23,11 @@ class Camera:
 
         ## SGMF
         #Importing cartography
-#        sgmfXY = cv2.imread(sgmf,-1)
+        # sgmfXY = cv2.imread(sgmf,-1)
         sgmfXY = np.load(sgmf)
         self.sgmf = np.zeros( sgmfXY.shape ) #SHAPE Lignes,Colonnes,CHANNEL
-        self.sgmf[:,:,0] = sgmfXY[:,:,0]/65535 * self.ecran.w[0] # channel X
-        self.sgmf[:,:,1] = sgmfXY[:,:,1]/65535 * self.ecran.w[1] # channel Y
+        self.sgmf[:,:,0] = sgmfXY[:,:,0] * self.ecran.w[0] # channel X
+        self.sgmf[:,:,1] = sgmfXY[:,:,1] * self.ecran.w[1] # channel Y
         self.w = np.array([self.sgmf.shape[1], self.sgmf.shape[0]])                             # Taille du CCD en [w]=pixels
 
         # Intrinsèque

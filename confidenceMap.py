@@ -16,11 +16,11 @@ def confidenceMap(sgmf, name):
     # uncomment for pre-blurring
 #    img = cv2.medianBlur(img,3)
 
-    
+
     red = img[:,:,1]     # CHANNEL Y
     green = img[:,:,2]   # CHANNEL X
 
-    
+
 
     # Adaptive Thresholding
     green2 = cv2.adaptiveThreshold(green, 255,
@@ -33,7 +33,7 @@ def confidenceMap(sgmf, name):
 
     edgeImgG = np.max( np.array([ edgedetect(red2) ]), axis=0 )
     edgeImgR = np.max( np.array([ edgedetect(green2) ]), axis=0 )
-    
+
 
     edgeImgR[edgeImgR <= np.mean(edgeImgR)] = 0;
     edgeImgG[edgeImgG <= np.mean(edgeImgG)] = 0;
@@ -41,13 +41,13 @@ def confidenceMap(sgmf, name):
     # Blur the image
     # changer le (21,21)PG en (7,7)AV
     maskimg = cv2.bilateralFilter(edgeImgR,5,75,75)*cv2.bilateralFilter(edgeImgG,5,75,75)
-    
+
 
 
     maskimg = 255 - maskimg * 255
     plt.imshow(maskimg)
     plt.show()
-    
+
     from scipy.ndimage import maximum_filter, minimum_filter
     def midpoint(img):
         maxf = maximum_filter(img, (51, 51))
@@ -57,17 +57,26 @@ def confidenceMap(sgmf, name):
         return midpoint
     plt.imshow(midpoint(maskimg))
     plt.show()
-    
-#    cv2.imwrite(name, midpoint(maskimg))
+
+    # cv2.imwrite(name, midpoint(maskimg))
 
 
 
 echantillon = "miroir_plan"
 camera = "AV"
 confidenceMap('./data/'+ echantillon +'/cam_match_' + camera + '.png', './data/'+ echantillon +'/extremeconf_' + camera + '.png')
-
-#blur1 = cv2.medianBlur(cv2.imread(sgmf1,-1),5)
-#blur2 = cv2.medianBlur(cv2.imread(sgmf2,-1),5)
 #
-#cv2.imwrite("./data/" + echantillon + "/cam_match_median_PG.png", blur1)
-#cv2.imwrite("./data/" + echantillon + "/cam_match_median_AV.png", blur2)
+
+# apply medianBlur to SGMF
+
+
+sgmf1 = "./data/" + echantillon + "/cam_match_PG.png"
+sgmf2 = "./data/" + echantillon + "/cam_match_AV.png"
+
+window = 7
+
+blur1 = cv2.medianBlur(cv2.imread(sgmf1,-1),window)
+blur2 = cv2.medianBlur(cv2.imread(sgmf2,-1),window)
+
+cv2.imwrite("./data/" + echantillon + "/cam_match_median" + str(window) +"_PG.png", blur1)
+cv2.imwrite("./data/" + echantillon + "/cam_match_median" + str(window) +"_AV.png", blur2)

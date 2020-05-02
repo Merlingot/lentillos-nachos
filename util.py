@@ -362,23 +362,40 @@ def set_aspect_3D(cam, ax):
 
 def show_sgmf(cam1, cam2, point):
     # Visualisation of SGMF points
-    f, (ax1, ax2,ax3,ax4) = plt.subplots(1, 4)
+    f, ((ax1, ax2), (ax3, ax4))  = plt.subplots(2, 2)
 
 
-    ax1.imshow(cam1.sgmf[:,:,0], cmap="Greys")
+    ax1.imshow(cam1.sgmf[:,:,0]*cam1.mask, cmap="Greys")
+    ax1.set_xlabel("u")
+    ax1.set_ylabel("v")
+    ax1.xaxis.set_label_position('top')
+    ax1.xaxis.tick_top()
+    ax1.set_title("SGMF PG")
     for pt in point.vecU1:
         ax1.scatter( pt[0], pt[1], color='r')
 
-    ax2.imshow(cam2.sgmf[:,:,0], cmap="Greys")
+    ax2.imshow(cam2.sgmf[:,:,0]*cam2.mask, cmap="Greys")
+    ax2.set_xlabel("u")
+    ax2.set_ylabel("v")
+    ax2.xaxis.set_label_position('top')
+    ax2.xaxis.tick_top()
+    ax2.set_title("SGMF AV")
     for pt in point.vecU2:
         ax2.scatter( pt[0], pt[1], color='g')
 
     ax3.plot(point.vecP[:,2], point.vecV, '-o', color='b')
+    # ax3.plot(point.vecP_ternary[:,2], point.vecV_ternary, 'o', color='b',markersize = 1)
     ax3.plot(point.pmin[2],point.valmin,'x',color = 'r')
+    ax3.set_xlabel("Distance parcourue selon d (m)")
+    ax3.set_ylabel("Inconsistency value")
 
     ax4.set_aspect('equal', 'box')
     ax4.axhline(0); ax4.axhline(900)
     ax4.axvline(0); ax4.axvline(1600)
+    ax4.set_xlabel("u'")
+    ax4.set_ylabel("v'")
+    ax4.xaxis.set_label_position('top')
+    ax4.xaxis.tick_top()
     for pt in point.vecE1:
         ax4.scatter( pt[0], pt[1], color='g')
     for pt in point.vecE2:

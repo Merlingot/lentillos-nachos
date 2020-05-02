@@ -10,6 +10,7 @@ import numpy as np
 from numpy import abs
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
+from PyAstronomy import pyasl
 
 
 
@@ -45,13 +46,7 @@ def search(surface, d, h, L, eps, cam1, cam2, ecran):
             point.vecU2[n]=u2; point.vecE2[n]=e2;
             p += h*d
             n+=1
-            
-        p_minus = p_min - h*d
-        p_plus = p_min + h*d
-#        print("p_min avant ternary",p_min)
-        p_min, val_min, _= ternary_search(p_minus, p_plus, d, eps, cam1, cam2, ecran)
-#        print("p_min après ternary",p_min)
-       
+
         # Enregistrer les valeurs minimales du point
         point.pmin=p_min; point.valmin=val_min; point.indexmin=index_min
         point.nmin=n_min
@@ -64,10 +59,16 @@ def search(surface, d, h, L, eps, cam1, cam2, ecran):
         point.vecN2 = point.vecN2[point.vecB];
         point.vecU2 = point.vecU2[point.vecB];
         point.vecE2 = point.vecE2[point.vecB];
+
         # Enregistrer le point étudié seulement si au moins un bon point:
         if point.indexmin:
+            # p_minus = p_min - h*d
+            # p_plus = p_min + h*d
+            # p_min, val_min, n1, n2 = ternary_search(point, p_minus, p_plus, d, eps, cam1, cam2, ecran)
+
+
+            # point.pmin=p_min; point.valmin=val_min; point.nmin=(n1+n2)/2
             surface.ajouter_point(point)
-            # show_sgmf(cam1, cam2, point)
 
 def evaluatePoint(p, cam1, cam2, ecran):
     """
@@ -117,7 +118,7 @@ def normal_at(P, cam, ecran):
     else:
         return None, None, None
 
-def ternary_search(p_minus, p_plus, d, eps, cam1, cam2, ecran):
+def ternary_search(point, p_minus, p_plus, d, eps, cam1, cam2, ecran):
     """
     Ternary search for the minimum of inconsistency m calculated between two points
     p_minus and p_plus until. Precision eps on the distance between
@@ -127,7 +128,8 @@ def ternary_search(p_minus, p_plus, d, eps, cam1, cam2, ecran):
     Returns:
         New minimum inconsistency value, new point, new normal associated
     """
-    
+    vecP=[]; vecV=[]
+
     p1 = p_minus
     p4 = p_plus
     _, val1, _, _, _, _, _, _ = evaluatePoint(p1, cam1, cam2, ecran)
@@ -135,31 +137,46 @@ def ternary_search(p_minus, p_plus, d, eps, cam1, cam2, ecran):
     h = np.linalg.norm(p4 - p1)
     if isinstance(val1,np.float) and isinstance(val4,np.float) :
         while h > eps:
-#            print("h = ",h)
             p2 = p1 + 1/3*h*d
             p3 = p4 - 1/3*h*d
             _, val2, _, _, _, _, _, _ = evaluatePoint(p2, cam1, cam2, ecran)
             _, val3, _, _, _, _, _, _ = evaluatePoint(p3, cam1, cam2, ecran)
-#            print("val2",val2)
-    #        print("p2",p2)
-    #        print("evaluatePoint(p2, cam1, cam2, ecran)",evaluatePoint(p4, cam1, cam2, ecran))
-    #        print("normal_at(homogene(p2), cam1, ecran)",normal_at(homogene(p4), cam1, ecran))
-    #        print("normal_at(homogene(p2), cam2, ecran)",normal_at(homogene(p4), cam2, ecran))
-    #        print("cam1.projectPoint( homogene(pmin) )",cam1.projectPoint( (p_minus+p_plus)/2 ))
-    #        print("cam2.projectPoint( homogene(p4) )",cam2.projectPoint( homogene(p4) ))
-    #        
             if isinstance(val2,np.float) and isinstance(val3,np.float) :
                 if val2 > val3:
                     p1 = p2
-    #                print("augmente p1")
+                    vecP.append(p2);vecV.append(val2)
                 else:
                     p4 = p3
-    #                print("diminue p4")
+                    vecP.append(p3);vecV.append(val3)
                 h = np.linalg.norm(p4 - p1)
-#            print("ternary search h = ",h)
+
     p_min = (p1 + p4)/2
-    _, val_min, _, _, _, _, _, _ = evaluatePoint(p_min, cam1, cam2, ecran)
-    return p_min, val_min, evaluatePoint(p_min, cam1, cam2, ecran) 
+    _, val_min, n1, _, _, n2, _, _ = evaluatePoint(p_min, cam1, cam2, ecran)
+    vecP.append(p_min); vecV.append(val_min)
+    point.vecP_ternary = np.array(vecP); point.vecV_ternary = np.array(vecV);
+    return p_min, val_min, n1, n2
+
+def parabolic_search(point,t,d,cam1, cam2, ecran):
+    # Find the maximum
+    x,y = point.vecP[:,2], point.vecV
+    # print(point.pmin[0],point.pmin[1],point.pmin[2],point.valmin,point.nmin[0],point.nmin[1],point.nmin[2])
+    epos, mi, xb, yb, p = pyasl.quadExtreme(x, y, mode="min", dp=(3,3),fullOutput=True)
+    p_min = point.vecP[0,:]
+    p_min[2] = epos
+    # newx = np.linspace(min(xb), max(xb), 100)
+    # model = np.polyval(p, newx)
+    # # print(epos)
+    #
+    # # Plot the "data"
+    # plt.plot(x, y, 'bp')
+    # # Mark the points used in the fitting (shifted, because xb is shifted)
+    # plt.plot(xb+x[mi], yb, 'rp')
+    # # Overplot the model (shifted, because xb is shifted)
+    # plt.plot(newx+x[mi], model, 'r--')
+    # plt.show()
+    _, val_min, n1, _, _, n2, _, _ = evaluatePoint(p_min, cam1, cam2, ecran)
+
+    return p_min, val_min, n1, n2
 
 def homogene(vec):
     """ np.array([x,y,z]) -> np.array([x,y,z,1])   """
