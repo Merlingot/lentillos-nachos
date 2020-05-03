@@ -10,7 +10,7 @@ import numpy as np
 from numpy import abs
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
-from PyAstronomy import pyasl
+#from PyAstronomy import pyasl
 
 
 

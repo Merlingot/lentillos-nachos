@@ -17,7 +17,7 @@ from Ecran import Ecran
 
 # choisir l'échantillon à caractériser parmi la panoplie collector best of 2018-2020 "ah les années poly, c'était beau" :
 #miroir_plan_anto, lentille_biconvexe, lentille_plano_convexe, miroir_plan
-echantillon = "miroir_plan"
+echantillon = "lentille_plano_convexe"
 
 
 #################################################################
@@ -81,7 +81,7 @@ plt.plot(lignes,sgmf_median[lignes,1000,1],'-o')
 plt.plot(lignes,FULL_SGMF[lignes,1000,1])
 plt.show()
 
-# np.save("./data/" + echantillon + "/cam_match_PG",FULL_SGMF/255)
+np.save("./data/" + echantillon + "/cam_match_PG",FULL_SGMF/255)
 
 
 
@@ -101,8 +101,8 @@ lignes = np.arange(0,np.shape(sgmf2)[0])
 
 sgmf = sgmf2
 sgmf_median = cv2.medianBlur(sgmf,7)
-data_v = sgmf_median[:,:,1]#*mask1
-data_u = sgmf_median[:,:,2]#*mask1
+data_v = sgmf_median[:,:,1]#*mask2
+data_u = sgmf_median[:,:,2]#*mask2
 
 
 
@@ -126,5 +126,4 @@ plt.show()
 plt.plot(lignes,sgmf2[lignes,450,1],'o')
 plt.plot(lignes,FULL_SGMF[lignes,450,1])
 plt.show()
-
-# np.save("./data/" + echantillon + "/cam_match_AV",FULL_SGMF/255)
+np.save("./data/" + echantillon + "/cam_match_AV",FULL_SGMF/255)
