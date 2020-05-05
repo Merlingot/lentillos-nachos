@@ -27,48 +27,46 @@ def search(surface, d, h, L, eps, cam1, cam2, ecran):
         Objet surface
     """
     N=int(np.floor(L/h)) # nombre d'itérations (de descentes) pour un seul point
-    for p in surface.grid: # Loop sur les points
-        # print('------------------ POINT ----------------')
-        point = Point(N)
-        n=0; index_min=None; n_min=None
-        p_initial = np.array([ p[0], p[1], p[2] ])
-        p_min = np.array([ p[0], p[1], p[2] ]); val_min = 1e10 #(infini)
-        while n<N: # Loop sur la descente du point
-            b, val, n1, u1, e1, n2, u2, e2 = evaluatePoint(p, cam1, cam2, ecran)
-            if b:
-                if val < val_min:
-                    index_min = n
-                    val_min = val
-                    p_min = np.array([p[0],p[1],p[2]])
-                    n_min=(n1+n2)/2
-            point.vecV[n]=val; point.vecP[n]=p; point.vecB[n]=b; point.vecN1[n]=n1; point.vecN2[n]=n2
-            point.vecU1[n]=u1; point.vecE1[n]=e1;
-            point.vecU2[n]=u2; point.vecE2[n]=e2;
-            p += h*d
-            n+=1
+    for point in surface.grid: # Loop sur les points
+        p=np.array([ point[0], point[1], point[2] ])
+        succes, tup = find_minimum(p, N, d, h, cam1, cam2, ecran)
+        # Continuer avec le point étudié seulement si au moins un bon point:
+        if succes:
+            (p_min, val_min, n_min, vecV, vecP) = tup
+            # Faire le refine search
+            p_minus = p_min - 2*h*d;
+            hr=h/40; Nr = int(4*h/hr)
+            succes_r, tup_r = find_minimum(p_minus, Nr ,d, hr, cam1, cam2, ecran)
+            if succes_r:
+                (p_min, val_min, n_min, vecV_r, vecP_r) = tup_r
+                # Enregistrer les resultats apres refine search
+                point = Point();
+                point.vecP=vecP; point.vecV=vecV #grossier
+                point.vecPr=vecP_r; point.vecVr=vecV_r #fin
+                point.pmin=p_min; point.valmin=val_min; point.nmin=n_min
 
-        # Enregistrer les valeurs minimales du point
-        point.pmin=p_min; point.valmin=val_min; point.indexmin=index_min
-        point.nmin=n_min
-        # Arranger les vecteurs pour enlever les NaN:
-        point.vecV=point.vecV[point.vecB]
-        point.vecP=point.vecP[point.vecB]
-        point.vecN1 = point.vecN1[point.vecB];
-        point.vecU1 = point.vecU1[point.vecB];
-        point.vecE1 = point.vecE1[point.vecB];
-        point.vecN2 = point.vecN2[point.vecB];
-        point.vecU2 = point.vecU2[point.vecB];
-        point.vecE2 = point.vecE2[point.vecB];
-
-        # Enregistrer le point étudié seulement si au moins un bon point:
-        if point.indexmin:
-            # p_minus = p_min - h*d
-            # p_plus = p_min + h*d
-            # p_min, val_min, n1, n2 = ternary_search(point, p_minus, p_plus, d, eps, cam1, cam2, ecran)
+                surface.ajouter_point(point)
 
 
-            # point.pmin=p_min; point.valmin=val_min; point.nmin=(n1+n2)/2
-            surface.ajouter_point(point)
+def find_minimum(p, N, d, h, cam1, cam2, ecran):
+    val_min = 1e10 #infini
+    succes=False; p_min=None; n_min=None
+    vecP=np.zeros((N,3)); vecV=np.zeros(N); vecB=np.zeros(N, dtype=bool)
+    n=0;
+    while n<N: # Loop sur la descente du point
+        b, val, n1, _, _, n2, _, _ = evaluatePoint(p, cam1, cam2, ecran)
+        if b:
+            if val < val_min:
+                succes = True
+                val_min = val
+                p_min = np.array([p[0],p[1],p[2]])
+                n_min = (n1+n2)/2
+        vecV[n]=val; vecP[n]=p; vecB[n]=b;
+        p += h*d
+        n+=1
+    # Arranger les vecteurs pour enlever les NaN:
+    vecV=vecV[vecB]; vecP=vecP[vecB]
+    return succes, (p_min, val_min, n_min, vecV, vecP)
 
 def evaluatePoint(p, cam1, cam2, ecran):
     """
@@ -117,6 +115,7 @@ def normal_at(P, cam, ecran):
             return None, None, None
     else:
         return None, None, None
+
 
 def ternary_search(point, p_minus, p_plus, d, eps, cam1, cam2, ecran):
     """
@@ -177,6 +176,8 @@ def parabolic_search(point,t,d,cam1, cam2, ecran):
     _, val_min, n1, _, _, n2, _, _ = evaluatePoint(p_min, cam1, cam2, ecran)
 
     return p_min, val_min, n1, n2
+
+# Vector functions
 
 def homogene(vec):
     """ np.array([x,y,z]) -> np.array([x,y,z,1])   """

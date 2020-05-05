@@ -11,8 +11,9 @@ plt.close('all')
 from Camera import Camera
 from Ecran import Ecran
 from nc import *
-from util import surface_refEcran, montage_refEcran, allo_refEcran,  show_sgmf, show_point
+from util import *
 import prgm
+import pickle
 
 
 
@@ -42,60 +43,56 @@ R1 = np.array(pg.R)
 T1 = np.array(pg.T)
 w1 = np.array( [3376, 2704] )
 W1 = w1* 1.69e-6
-cam1 = Camera(ecran, K1, R1, T1, W1, sgmf1)
-cam1.dist=d1
-cam1.mask = cv2.imread("./data/" + echantillon + "/confcrop_PG.png", 0).astype('bool')
+camR = Camera(ecran, K1, R1, T1, W1, sgmf1)
+camR.dist=d1
+camR.mask = cv2.imread("./data/" + echantillon + "/confcrop_PG.png", 0).astype('bool')
 # Allied vision -------------------------------------
 sgmf2 = "./data/" + echantillon + "/cam_match_AV.npy"
 R2 = np.array(av.R)
 T2 = np.array(av.T)
 w2 = np.array( [780, 580] )
 W2 = w2 * 8.3e-6
-cam2 = Camera(ecran, K2, R2, T2, W2, sgmf2)
-cam2.dist=d2
-cam2.mask = cv2.imread("./data/" + echantillon + '/confcrop_AV.png', 0).astype('bool')
+cam = Camera(ecran, K2, R2, T2, W2, sgmf2)
+cam.dist=d2
+cam.mask = cv2.imread("./data/" + echantillon + '/confcrop_AV.png', 0).astype('bool')
+
 #----------------------------------------------------------------------------
-
-#################################################################
-# # Notre miroir :
-# y1=-0.0; y2=-0.15
-y1=-0.0; y2=-0.10
-# x1=0.07; x2=-0.07
-x1=0.04; x2=-0.04
-
-#direction de recherche normale a lecran
-d = np.array([0,0,-1])
-t = np.array([0.00, -0.05, -15e-2])
-# t = np.array([0,0,0e-2])
-#direction de recherche normale a une camera
-# d = cam1.camToEcran(np.array([0,0,1,0]))[:3]
-# t = cam1.camToEcran(np.array([0,0,0,1]))[:3] + d*20e-2
-
-h=0.1e-2
-l=5e-2
-eps = h/5 # tolérance sur l'encadrement de la distance parcourue selon d pour trouver p_min
-
 grid = []
-o = t
-dk=0.0025
-Lx=0.15
-Ly=0.15
-kx=int(np.floor(Lx/dk/2)); ky=int(np.floor(Ly/dk/2))
-
-# print(str(int(4*kx*ky)) + " points dans la grille de départ")
-
-searchVolumeBasis = graham( d, [1,0,0], [0,1,0] )
-v1 = searchVolumeBasis[0]; v2 = searchVolumeBasis[1]; v3 = searchVolumeBasis[2]
-for j in np.arange(-kx, kx):
-    for i in np.arange(-ky, ky):
-        a = o + i*dk*v3 + j*dk*v2
+Nx=20;Ny=20
+(ky,kx) = np.nonzero(camR.mask)
+maxX=np.max(kx);minX=np.min(kx)
+maxY=np.max(ky);minY=np.min(ky)
+for i in np.arange(int(minX), int(maxX), int(((maxX-minX)/Nx)) ):
+    for j in np.arange(int(minY), int(maxY), int(((maxY-minY)/Ny)) ):
+        a = i*np.array([1,0,0]) + j*np.array([0,1,0])+np.array([0,0,1])
         grid.append(a)
 surf=Surface(grid)
 
-## RECONSTRUCTION ------------------------------------------------
+h=5e-2
+L=100e-2
 
-search(surf, d, h, l, eps, cam1, cam2, ecran)
+prgm.search(surf, h, L, camR, cam, ecran)
 
-import pickle
-f=open( "./allo", "wb")
-pickle.dump(surf, f)
+
+# f=open( "./allocacaewew", "wb")
+# pickle.dump(surf, f)
+# -----------------------------------------------------
+
+
+# file = open('allocacaewew', 'rb')
+# dump information to that file
+# surf = pickle.load(file)
+# close the file
+# file.close()
+
+
+surf.enr_points_finaux(surf.points)
+# montage_refEcran(surf, ecran, cam1, cam2, 10e-2, np.array([0,0,0]), np.array([0,0,1]))
+
+# fig = plt.figure()
+# ax = Axes3D(fig)
+# allo= ax.plot3D(surf.x_f, surf.y_f, surf.z_f, 'o')
+# plt.show()
+
+for p in surf.points:
+    show_caca(cam2, cam1, p)

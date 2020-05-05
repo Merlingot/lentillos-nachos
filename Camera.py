@@ -22,13 +22,20 @@ class Camera:
         self.ecran = ecran
 
         ## SGMF
-        #Importing cartography
-        # sgmfXY = cv2.imread(sgmf,-1)
-        sgmfXY = np.load(sgmf)
-        self.sgmf = np.zeros( sgmfXY.shape ) #SHAPE Lignes,Colonnes,CHANNEL
-        self.sgmf[:,:,0] = sgmfXY[:,:,0] * self.ecran.w[0] # channel X
-        self.sgmf[:,:,1] = sgmfXY[:,:,1] * self.ecran.w[1] # channel Y
-        self.w = np.array([self.sgmf.shape[1], self.sgmf.shape[0]])                             # Taille du CCD en [w]=pixels
+        if cv2.imread(sgmf):
+            #Importing png
+            sgmfXY = cv2.imread(sgmf,-1)/65535
+            self.sgmf = np.zeros( [sgmfXY.shape[0], sgmfXY.shape[1],2] ) #SHAPE Lignes,Colonnes,CHANNEL
+            self.sgmf[:,:,0] = sgmfXY[:,:,2] * self.ecran.w[0] # channel X
+            self.sgmf[:,:,1] = sgmfXY[:,:,1] * self.ecran.w[1] # channel Y
+        else:
+            #Importer une matrice
+            sgmfXY = np.load(sgmf)
+            self.sgmf = np.zeros( [sgmfXY.shape[0], sgmfXY.shape[1],2] ) #SHAPE Lignes,Colonnes,CHANNEL
+            self.sgmf[:,:,0] = sgmfXY[:,:,0] * self.ecran.w[0] # channel X
+            self.sgmf[:,:,1] = sgmfXY[:,:,1] * self.ecran.w[1] # channel Y
+
+        self.w = np.array([self.sgmf.shape[1], self.sgmf.shape[0]]) # Taille du CCD en [w]=pixels
 
         # Intrinsèque
         self.K = K                              # Tout information
@@ -109,7 +116,7 @@ class Camera:
 
 
 
-    # FONCTIONS D'AFFICHAGE -------------------------------------------------
+    # FONCTIONS prgm et affichage -------------------------------------------------
 
     def pixelToSpace(self, vecPix):
         """
@@ -129,7 +136,7 @@ class Camera:
 
     def cacmouE(self, vecPix):
         """
-        * homogène (fonction d'affichage)
+        * homogène
         [u,v,1] -> [X,Y,Z,1]
 
         Prend la coordonnée d'un pixel de la caméra (u,v,1) [pixel] et le transforme

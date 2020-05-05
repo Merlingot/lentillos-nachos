@@ -38,3 +38,23 @@ plt.plot(xb+x[mi], yb, 'rp')
 # Overplot the model (shifted, because xb is shifted)
 plt.plot(newx+x[mi], model, 'r--')
 plt.show()
+
+
+
+
+
+# SHOW DIFFERENT SGMF APPROXIMATIONS
+sgmf17 = cv2.imread("./data/" + echantillon + "/cam_match_median7_PG.png",-1)/900
+sgmf15 = cv2.imread("./data/" + echantillon + "/cam_match_median5_PG.png",-1)/900
+sgmf10 = cv2.imread("./data/" + echantillon + "/cam_match_PG.png",-1)/900
+
+spl = UnivariateSpline(np.arange(0,len(sgmf10[:,1000,1])),sgmf10[:,1000,1])
+sgmfspl = spl(np.arange(0,len(sgmf10[:,1000,1])))
+
+
+plt.plot(sgmf10[:,1000,1],'-o')
+plt.plot(sgmfspl)
+plt.plot(sgmf15[:,1000,1],'-o')
+plt.plot(sgmf17[:,1000,1],'-o')
+plt.legend(["raw","UnivariateSpline","5 pixel window","7 pixel window"])
+plt.show()

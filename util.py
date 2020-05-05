@@ -60,14 +60,14 @@ def grilles_refEcran(surf, rgb_grille_i, rgb_grille_f, t, d, L, S=50):
     dirRecherche = d
 
     # Grille initiale
-    data_grille_init = go.Mesh3d(
-        x = surf.x_i,
-        y = surf.y_i,
-        z = surf.z_i,
-        # mode = 'markers',
-        # marker = dict(size=9)
-        opacity=0.1
-        )
+    # data_grille_init = go.Mesh3d(
+    #     x = surf.x_i,
+    #     y = surf.y_i,
+    #     z = surf.z_i,
+    #     # mode = 'markers',
+    #     # marker = dict(size=9)
+    #     opacity=0.1
+    #     )
     # Grille finale
     data_grille_finale= go.Scatter3d(
         x = surf.x_f,
@@ -76,8 +76,8 @@ def grilles_refEcran(surf, rgb_grille_i, rgb_grille_f, t, d, L, S=50):
         mode = 'markers',
         marker = dict(size=1)
         )
-    data = [data_grille_init, data_grille_finale]
-    # data =  [data_grille_finale]
+    # data = [data_grille_init, data_grille_finale]
+    data =  [data_grille_finale]
     ## recherche
     # data += fleche(oRecherche, dirRecherche, rgb=rgb_grille_i, s=1/S, l=L, name='Direction recherche')
 
@@ -364,7 +364,6 @@ def show_sgmf(cam1, cam2, point):
     # Visualisation of SGMF points
     f, ((ax1, ax2), (ax3, ax4))  = plt.subplots(2, 2)
 
-
     ax1.imshow(cam1.sgmf[:,:,0]*cam1.mask, cmap="Greys")
     ax1.set_xlabel("u")
     ax1.set_ylabel("v")
@@ -400,5 +399,63 @@ def show_sgmf(cam1, cam2, point):
         ax4.scatter( pt[0], pt[1], color='g')
     for pt in point.vecE2:
         ax4.scatter( pt[0], pt[1], color='r')
+
+    plt.show()
+
+
+def show_point(point):
+    # Visualisation of SGMF points
+    f, ax3  = plt.subplots()
+
+    ax3.plot(point.vecP[:,2], point.vecV, '-o', color='tab:blue')
+    ax3.plot(point.vecPr[:,2], point.vecVr, '-o', color='tab:orange')
+    # ax3.plot(point.vecP_ternary[:,2], point.vecV_ternary, 'o', color='b',markersize = 1)
+    ax3.plot(point.pmin[2],point.valmin,'x',color = 'tab:pink')
+    ax3.set_xlabel("Distance parcourue selon d (m)")
+    ax3.set_ylabel("Inconsistency value")
+
+    plt.show()
+
+def show_caca(camR, cam, point):
+    # Visualisation of SGMF points
+    f, ((ax1, ax2), (ax3, ax4))  = plt.subplots(2, 2, figsize=(10,7))
+
+    ax1.imshow(camR.sgmf[:,:,0]*camR.mask, cmap="Greys")
+    ax1.set_xlabel("u")
+    ax1.set_ylabel("v")
+    ax1.xaxis.set_label_position('top')
+    ax1.xaxis.tick_top()
+    ax1.set_title("SGMF CAM REF")
+    for pt in point.vecUr:
+        ax1.scatter( pt[0], pt[1], color='r')
+
+    ax2.imshow(cam.sgmf[:,:,0]*cam.mask, cmap="Greys")
+    ax2.set_xlabel("u")
+    ax2.set_ylabel("v")
+    ax2.xaxis.set_label_position('top')
+    ax2.xaxis.tick_top()
+    ax2.set_title("SGMF CAM 2")
+    for pt in point.vecU:
+        ax2.scatter( pt[0], pt[1], color='g')
+
+    ax3.plot(point.vecP[:,2], point.vecV, '-o', color='b')
+    # ax3.plot(point.vecP_ternary[:,2], point.vecV_ternary, 'o', color='b',markersize = 1)
+    ax3.plot(point.pmin[2],point.valmin,'x',color = 'r')
+    ax3.set_xlabel("Distance parcourue selon d (m)")
+    ax3.set_ylabel("Inconsistency value")
+
+    ax4.set_aspect('equal', 'box')
+    ax4.axhline(0); ax4.axhline(900)
+    ax4.axvline(0); ax4.axvline(1600)
+    ax4.set_xlabel("u'")
+    ax4.set_ylabel("v'")
+    ax4.xaxis.set_label_position('top')
+    ax4.xaxis.tick_top()
+    for pt in point.vecEr:
+        ax4.scatter( pt[0], pt[1], color='r')
+    for pt in point.vecE:
+        ax4.scatter( pt[0], pt[1], color='g')
+    for pt in point.vecE:
+        ax4.scatter( pt[0], pt[1], color='g', marker='x')
 
     plt.show()
