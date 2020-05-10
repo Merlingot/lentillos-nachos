@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/Users/mariannelado-roy/projet4/calibration/tnm-opencv/demoPG.cc" "/Users/mariannelado-roy/projet4/calibration/build/CMakeFiles/calibexePG.dir/demoPG.cc.o"
+  "/Users/mariannelado-roy/lentillos-nachos/calibration/tnm-opencv/demoPG.cc" "/Users/mariannelado-roy/lentillos-nachos/calibration/build/CMakeFiles/calibexePG.dir/demoPG.cc.o"
   )
 set(CMAKE_CXX_COMPILER_ID "Clang")
 

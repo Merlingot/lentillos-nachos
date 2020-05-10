@@ -14,12 +14,6 @@ l_pix = 0.277e-3 # Largeur d'un pixel
 squareSize = nb_pix*l_pix
 FLIP=0 # flip par rapport à y
 
-# k=0
-# for j in range(NB_CORNER_HEIGHT):
-#     for i in range(NB_CORNER_WIDTH):
-#         objp[k] = [i,NB_CORNER_HEIGHT-j-1,0]
-#         k+=1
-
 
 def takahashi(PATH, NB_CORNER_WIDTH, NB_CORNER_HEIGHT, squareSize, cam):
     """

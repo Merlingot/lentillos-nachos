@@ -22,7 +22,7 @@ class Camera:
         self.ecran = ecran
 
         ## SGMF
-        if cv2.imread(sgmf):
+        if sgmf[-3:]=='png':
             #Importing png
             sgmfXY = cv2.imread(sgmf,-1)/65535
             self.sgmf = np.zeros( [sgmfXY.shape[0], sgmfXY.shape[1],2] ) #SHAPE Lignes,Colonnes,CHANNEL

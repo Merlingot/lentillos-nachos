@@ -6,6 +6,158 @@ import plotly.figure_factory as ff
 import cycler
 
 
+# Visualisation en matplotlib --------------------------------------------------
+
+def set_aspect_3D(pmin, pmax, ax):
+    ## Set aspect -----------------------------------------
+    X=np.array([pmin[0], pmax[0]])
+    Y=np.array([pmin[1], pmax[1]])
+    Z=np.array([pmin[2], pmax[2]])
+    # Create cubic bounding box to simulate equal aspect ratio
+    max_range = np.array([X.max()-X.min(), Y.max()-Y.min(), Z.max()-Z.min()]).max()
+    Xb = 0.5*max_range*np.mgrid[-1:2:2,-1:2:2,-1:2:2][0].flatten() + 0.5*(X.max()+X.min())
+    Yb = 0.5*max_range*np.mgrid[-1:2:2,-1:2:2,-1:2:2][1].flatten() + 0.5*(Y.max()+Y.min())
+    Zb = 0.5*max_range*np.mgrid[-1:2:2,-1:2:2,-1:2:2][2].flatten() + 0.5*(Z.max()+Z.min())
+    # Comment or uncomment following both lines to test the fake bounding box:
+    for xb, yb, zb in zip(Xb, Yb, Zb):
+       ax.plot([xb], [yb], [zb], 'w')
+    ## Set aspect -----------------------------------------
+
+
+def show_sgmf(cam1, cam2, point):
+    # Visualisation of SGMF points
+    f, ((ax1, ax2), (ax3, ax4))  = plt.subplots(2, 2)
+
+    ax1.imshow(cam1.sgmf[:,:,0]*cam1.mask, cmap="Greys")
+    ax1.set_xlabel("u")
+    ax1.set_ylabel("v")
+    ax1.xaxis.set_label_position('top')
+    ax1.xaxis.tick_top()
+    ax1.set_title("SGMF PG")
+    for pt in point.vecU1:
+        ax1.scatter( pt[0], pt[1], color='r')
+
+    ax2.imshow(cam2.sgmf[:,:,0]*cam2.mask, cmap="Greys")
+    ax2.set_xlabel("u")
+    ax2.set_ylabel("v")
+    ax2.xaxis.set_label_position('top')
+    ax2.xaxis.tick_top()
+    ax2.set_title("SGMF AV")
+    for pt in point.vecU2:
+        ax2.scatter( pt[0], pt[1], color='g')
+
+    ax3.plot(point.vecP[:,2], point.vecV, '-o', color='b')
+    ax3.plot(point.pmin[2],point.valmin,'x',color = 'r')
+    ax3.set_xlabel("Distance parcourue selon d (m)")
+    ax3.set_ylabel("Inconsistency value")
+
+    ax4.set_aspect('equal', 'box')
+    ax4.axhline(0); ax4.axhline(900)
+    ax4.axvline(0); ax4.axvline(1600)
+    ax4.set_xlabel("u'")
+    ax4.set_ylabel("v'")
+    ax4.xaxis.set_label_position('top')
+    ax4.xaxis.tick_top()
+    for pt in point.vecE1:
+        ax4.scatter( pt[0], pt[1], color='g')
+    for pt in point.vecE2:
+        ax4.scatter( pt[0], pt[1], color='r')
+
+    plt.show()
+
+
+def show_point(point):
+    # Visualisation of SGMF points
+    f, (ax3,ax4,ax5,ax6)  = plt.subplots(1,4)
+    f.add_subplot(111, frameon=False)
+    # hide tick and tick label of the big axis
+    plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
+
+    ax3.plot(point.vecP[:,2], point.vecV, '-o', color='tab:blue')
+    ax3.plot(point.vecPr[:,2], point.vecVr, '-o', color='tab:orange', markersize=3)
+    ax4.plot(point.vecPrr[:,2], point.vecVrr, '-o', color='tab:pink', markersize=3)
+    ax4.plot( point.vecPrrr[:,2], point.vecVrrr, 'o', color='tab:purple', markersize=3)
+    ax5.plot( point.vecPrrr[:,2], point.vecVrrr, '-o', color='tab:purple', markersize=3)
+    ax5.plot( point.vecPs[:,2], point.vecVs, 'o', color='tab:cyan', markersize=3)
+    ax6.plot( point.vecPs[:,2], point.vecVs, 'o', color='tab:cyan', markersize=3)
+    # ax3.plot(point.vecP_ternary[:,2], point.vecV_ternary, 'o', color='b',markersize = 1)
+    ax3.plot(point.pmin[2],point.valmin,'x',color = 'tab:red')
+    ax4.plot(point.pmin[2],point.valmin,'x',color = 'tab:red')
+    ax5.plot(point.pmin[2],point.valmin,'x',color = 'tab:red')
+    ax6.plot(point.pmin[2],point.valmin,'x',color = 'tab:red')
+    plt.xlabel("Distance parcourue selon d (m)")
+    plt.ylabel("Inconsistence")
+
+    plt.tight_layout()
+
+    plt.show()
+
+def show_sgmf_prgm(camR, cam, point):
+    # Visualisation of SGMF points
+    f, ((ax1, ax2), (ax3, ax4))  = plt.subplots(2, 2, figsize=(10,7))
+
+    ax1.imshow(camR.sgmf[:,:,0]*camR.mask, cmap="Greys")
+    ax1.set_xlabel("u")
+    ax1.set_ylabel("v")
+    ax1.xaxis.set_label_position('top')
+    ax1.xaxis.tick_top()
+    ax1.set_title("SGMF CAM REF")
+    for pt in point.vecUr:
+        ax1.scatter( pt[0], pt[1], color='r')
+
+    ax2.imshow(cam.sgmf[:,:,0]*cam.mask, cmap="Greys")
+    ax2.set_xlabel("u")
+    ax2.set_ylabel("v")
+    ax2.xaxis.set_label_position('top')
+    ax2.xaxis.tick_top()
+    ax2.set_title("SGMF CAM 2")
+    for pt in point.vecU:
+        ax2.scatter( pt[0], pt[1], color='g')
+
+    ax3.plot(point.vecPrrr[:,2], point.vecVrrr, '-o', color='b')
+    # ax3.plot(point.vecP_ternary[:,2], point.vecV_ternary, 'o', color='b',markersize = 1)
+    ax3.plot(point.pmin[2],point.valmin,'x',color = 'r')
+    ax3.set_xlabel("Distance parcourue selon d (m)")
+    ax3.set_ylabel("Inconsistency value")
+
+    ax4.set_aspect('equal', 'box')
+    ax4.axhline(0); ax4.axhline(900)
+    ax4.axvline(0); ax4.axvline(1600)
+    ax4.set_xlabel("u'")
+    ax4.set_ylabel("v'")
+    ax4.xaxis.set_label_position('top')
+    ax4.xaxis.tick_top()
+    for pt in point.vecEr:
+        ax4.scatter( pt[0], pt[1], color='r')
+    for pt in point.vecE:
+        ax4.scatter( pt[0], pt[1], color='g')
+    for pt in point.vecE:
+        ax4.scatter( pt[0], pt[1], color='g', marker='x')
+
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 O_CAM_REF_CAM = np.array([0,0,0])
 DIR_CAM_REF_CAM = np.array([0,0,1])
 
@@ -333,129 +485,24 @@ def set_aspect_3D_plotly(cam, fig):
                         opacity=0
                     )))
 
+def set_aspect_plotly(pmin,pmax, fig):
+    """
+    Fait en sorte que la visualisation soit pas dégueu
+    """
 
-
-
-
-
-
-
-
-
-# Visualisation en matplotlib --------------------------------------------------
-
-def set_aspect_3D(cam, ax):
-    ## Set aspect -----------------------------------------
-    X=np.array([0, cam.S[0]])
-    Y=np.array([0, cam.S[1]])
-    Z=np.array([0, cam.S[2]])
+    X=np.array([pmin[0], pmax[0]])
+    Y=np.array([pmin[1], pmax[1]])
+    Z=np.array([pmin[2], pmax[2]])
     # Create cubic bounding box to simulate equal aspect ratio
     max_range = np.array([X.max()-X.min(), Y.max()-Y.min(), Z.max()-Z.min()]).max()
     Xb = 0.5*max_range*np.mgrid[-1:2:2,-1:2:2,-1:2:2][0].flatten() + 0.5*(X.max()+X.min())
     Yb = 0.5*max_range*np.mgrid[-1:2:2,-1:2:2,-1:2:2][1].flatten() + 0.5*(Y.max()+Y.min())
     Zb = 0.5*max_range*np.mgrid[-1:2:2,-1:2:2,-1:2:2][2].flatten() + 0.5*(Z.max()+Z.min())
-    # Comment or uncomment following both lines to test the fake bounding box:
-    for xb, yb, zb in zip(Xb, Yb, Zb):
-       ax.plot([xb], [yb], [zb], 'w')
-    ## Set aspect -----------------------------------------
-
-
-def show_sgmf(cam1, cam2, point):
-    # Visualisation of SGMF points
-    f, ((ax1, ax2), (ax3, ax4))  = plt.subplots(2, 2)
-
-    ax1.imshow(cam1.sgmf[:,:,0]*cam1.mask, cmap="Greys")
-    ax1.set_xlabel("u")
-    ax1.set_ylabel("v")
-    ax1.xaxis.set_label_position('top')
-    ax1.xaxis.tick_top()
-    ax1.set_title("SGMF PG")
-    for pt in point.vecU1:
-        ax1.scatter( pt[0], pt[1], color='r')
-
-    ax2.imshow(cam2.sgmf[:,:,0]*cam2.mask, cmap="Greys")
-    ax2.set_xlabel("u")
-    ax2.set_ylabel("v")
-    ax2.xaxis.set_label_position('top')
-    ax2.xaxis.tick_top()
-    ax2.set_title("SGMF AV")
-    for pt in point.vecU2:
-        ax2.scatter( pt[0], pt[1], color='g')
-
-    ax3.plot(point.vecP[:,2], point.vecV, '-o', color='b')
-    # ax3.plot(point.vecP_ternary[:,2], point.vecV_ternary, 'o', color='b',markersize = 1)
-    ax3.plot(point.pmin[2],point.valmin,'x',color = 'r')
-    ax3.set_xlabel("Distance parcourue selon d (m)")
-    ax3.set_ylabel("Inconsistency value")
-
-    ax4.set_aspect('equal', 'box')
-    ax4.axhline(0); ax4.axhline(900)
-    ax4.axvline(0); ax4.axvline(1600)
-    ax4.set_xlabel("u'")
-    ax4.set_ylabel("v'")
-    ax4.xaxis.set_label_position('top')
-    ax4.xaxis.tick_top()
-    for pt in point.vecE1:
-        ax4.scatter( pt[0], pt[1], color='g')
-    for pt in point.vecE2:
-        ax4.scatter( pt[0], pt[1], color='r')
-
-    plt.show()
-
-
-def show_point(point):
-    # Visualisation of SGMF points
-    f, ax3  = plt.subplots()
-
-    ax3.plot(point.vecP[:,2], point.vecV, '-o', color='tab:blue')
-    ax3.plot(point.vecPr[:,2], point.vecVr, '-o', color='tab:orange')
-    # ax3.plot(point.vecP_ternary[:,2], point.vecV_ternary, 'o', color='b',markersize = 1)
-    ax3.plot(point.pmin[2],point.valmin,'x',color = 'tab:pink')
-    ax3.set_xlabel("Distance parcourue selon d (m)")
-    ax3.set_ylabel("Inconsistency value")
-
-    plt.show()
-
-def show_caca(camR, cam, point):
-    # Visualisation of SGMF points
-    f, ((ax1, ax2), (ax3, ax4))  = plt.subplots(2, 2, figsize=(10,7))
-
-    ax1.imshow(camR.sgmf[:,:,0]*camR.mask, cmap="Greys")
-    ax1.set_xlabel("u")
-    ax1.set_ylabel("v")
-    ax1.xaxis.set_label_position('top')
-    ax1.xaxis.tick_top()
-    ax1.set_title("SGMF CAM REF")
-    for pt in point.vecUr:
-        ax1.scatter( pt[0], pt[1], color='r')
-
-    ax2.imshow(cam.sgmf[:,:,0]*cam.mask, cmap="Greys")
-    ax2.set_xlabel("u")
-    ax2.set_ylabel("v")
-    ax2.xaxis.set_label_position('top')
-    ax2.xaxis.tick_top()
-    ax2.set_title("SGMF CAM 2")
-    for pt in point.vecU:
-        ax2.scatter( pt[0], pt[1], color='g')
-
-    ax3.plot(point.vecP[:,2], point.vecV, '-o', color='b')
-    # ax3.plot(point.vecP_ternary[:,2], point.vecV_ternary, 'o', color='b',markersize = 1)
-    ax3.plot(point.pmin[2],point.valmin,'x',color = 'r')
-    ax3.set_xlabel("Distance parcourue selon d (m)")
-    ax3.set_ylabel("Inconsistency value")
-
-    ax4.set_aspect('equal', 'box')
-    ax4.axhline(0); ax4.axhline(900)
-    ax4.axvline(0); ax4.axvline(1600)
-    ax4.set_xlabel("u'")
-    ax4.set_ylabel("v'")
-    ax4.xaxis.set_label_position('top')
-    ax4.xaxis.tick_top()
-    for pt in point.vecEr:
-        ax4.scatter( pt[0], pt[1], color='r')
-    for pt in point.vecE:
-        ax4.scatter( pt[0], pt[1], color='g')
-    for pt in point.vecE:
-        ax4.scatter( pt[0], pt[1], color='g', marker='x')
-
-    plt.show()
+    fig.add_trace(go.Scatter3d(x=Xb,
+                   y=Yb,
+                   z=-1*Zb,
+                   mode='markers',
+                    marker=dict(
+                        color='rgba(255,255,255,0)',
+                        opacity=0
+                    )))

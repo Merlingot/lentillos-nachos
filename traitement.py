@@ -9,114 +9,208 @@ from scipy.optimize import curve_fit
 from numpy.linalg import lstsq
 
 from util import *
-
 import pickle
-# open a file, where you stored the pickled data
-file = open('allocacaewew', 'rb')
-# dump information to that file
+
+echantillon='miroir_plan'
+
+file = open('./prgm/AV/miroir_plan_brute_25x25', 'rb')
 surf = pickle.load(file)
-# close the file
 file.close()
-
-
 surf.enr_points_finaux(surf.points)
 
-fig = plt.figure()
-ax = Axes3D(fig)
-allo= ax.plot3D(surf.x_f, surf.y_f, surf.z_f, 'o')
+# Premiere etape : Rapporter a zero -----------------------------------
+xs,ys,zs = surf.x_f, surf.y_f, surf.z_f
+
+# Deuxieme etape : redresser le plan -----------------------------------
+# do fit
+tmp_A = []
+tmp_b = []
+for i in range(len(xs)):
+    tmp_A.append([xs[i], ys[i], 1])
+    tmp_b.append(zs[i])
+b = np.matrix(tmp_b).T
+A = np.matrix(tmp_A)
+fit = (A.T * A).I * A.T * b
+errors = b - A * fit
+residual = np.linalg.norm(errors)
+
+print ("solution:")
+print ("%f x + %f y + %f = z" % (fit[0], fit[1], fit[2]))
+print ("residual:")
+print (residual)
+
+# X,Y = np.meshgrid(xs, ys)
+# plot plane
+# plt.figure()
+# ax = plt.subplot(111, projection='3d')
+# ax.scatter(xs, ys, zs, color='b')
+# Z = fit.item(0) * X + fit.item(1) * Y + fit.item(2)
+# ax.plot_wireframe(X,Y,Z, color='k')
+# ax.set_xlabel('x')
+# ax.set_ylabel('y')
+# ax.set_zlabel('z')
+
+a=fit.item(0); b=fit.item(1); c=-1; d=fit.item(2)
+n=np.array([a,b,c])
+a=n/np.linalg.norm(n)
+b=np.array([0,0,1])
+v=np.cross(a,b)
+s=np.linalg.norm(v)
+c=a@b
+v1,v2,v3=v[0],v[1],v[2]
+vx=np.array([[0,-v3,v2],[v3,0,-v1],[-v2,v1,0]])
+vx2=vx@vx
+R= np.eye(3) + vx + vx2*(1-c)/s**2
+
+# Rotation de 45 degree
+t=0
+Rz=np.array([[np.cos(t), -np.sin(t),0],[np.sin(t), np.cos(t),0], [0,0,1]])
+x,y,z=np.zeros(len(xs)), np.zeros(len(xs)), np.zeros(len(xs))
+for i in range(len(xs)):
+    vec=np.array([xs[i],ys[i],zs[i]])
+    rot=Rz@(R@vec)
+    x[i],y[i],z[i]= rot[0],rot[1],rot[2]
+
+# TRANSROMATION DES DONNÉES !!
+# Mettre a zero
+z=z-np.min(z)
+# METTRE EN CM
+Z=z*1e2
+X=(x)*1e2
+Y=(y)*1e2
+pmin=[np.min(X), np.min(Y),np.min(Z)]
+pmax=[np.max(X), np.max(Y),np.max(Z)]
+
+# plt.figure()
+# ax = plt.subplot(111, projection='3d')
+# ax.scatter(x, y, z, color='b')
+# ax.set_xlabel('x')
+# ax.set_ylabel('y')
+# ax.set_zlabel('z')
 # plt.show()
 
-for p in surf.points:
-    show_caca(camR, cam, point)
 
 
-# # TRAITEMENT DES DONNÉES ------------------------------------------------
-#
-# #
-#
-# #
-# def func(x,a,b,x0,y0):
-#     return y0**2 + np.sqrt( b**2 * ((x-x0)/a)**2 + 1) -1
-#    # return np.piecewise(x, [x < x0, x > x0], [lambda x:a1*(x-x01), lambda x:a2*(x-x02)])
-#
-# ramp = lambda u: np.maximum( u, 0 )
-# step = lambda u: ( u > 0 ).astype(float)
-#
-# def SegmentedLinearReg( X, Y, breakpoints ):
-#    nIterationMax = 10
-#
-#    breakpoints = np.sort( np.array(breakpoints) )
-#
-#    dt = np.min( np.diff(X) )
-#    ones = np.ones_like(X)
-#
-#    for i in range( nIterationMax ):
-#        # Linear regression:  solve A*p = Y
-#        Rk = [ramp( X - xk ) for xk in breakpoints ]
-#        Sk = [step( X - xk ) for xk in breakpoints ]
-#        A = np.array([ ones, X ] + Rk + Sk )
-#        p =  lstsq(A.transpose(), Y, rcond=None)[0]
-#
-#        # Parameters identification:
-#        a, b = p[0:2]
-#        ck = p[ 2:2+len(breakpoints) ]
-#        dk = p[ 2+len(breakpoints): ]
-#
-#        # Estimation of the next break-points:
-#        newBreakpoints = breakpoints - dk/ck
-#
-#        # Stop condition
-#        if np.max(np.abs(newBreakpoints - breakpoints)) < dt/5:
-#            break
-#
-#        breakpoints = newBreakpoints
-#    else:
-#        print( 'maximum iteration reached' )
-#
-#    # Compute the final segmented fit:
-#    Xsolution = np.insert( np.append( breakpoints, max(X) ), 0, min(X) )
-#    ones =  np.ones_like(Xsolution)
-#    Rk = [ c*ramp( Xsolution - x0 ) for x0, c in zip(breakpoints, ck) ]
-#
-#    Ysolution = a*ones + b*Xsolution + np.sum( Rk, axis=0 )
-#
-#    return Xsolution, Ysolution
-#
-#
-#
-#
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-#
-# for point in surf.points:
-#     # surf.good_points.append(point)
-#     if point.valmin < 0.01:
-#         if len(point.vecP[:,2]) >= 13:
-#             spl = UnivariateSpline(-point.vecP[:,2], point.vecV, k = 4, s = 0)
-#             roots = spl.derivative(1).roots()
-#             dev1 = spl.derivative(1)
-#             dev2 = spl.derivative(2)
-#             if len(roots) == 1:
-#                 if dev2(roots) > 0:
-#                     # on ne garde que les points dont la proportion de montée est d'un certain pourcentage de la plage
-#                     if np.max(np.absolute(np.ediff1d( point.vecV))) < 0.01:
-#                         if sum(dev1(-point.vecP[:,2]) <= 0)/len(-point.vecP[:,2]) > 0.25:
-#                             if sum(dev1(-point.vecP[:,2]) >= 0)/len(-point.vecP[:,2]) > 0.25 :
-# #                                p_min, val_min, n1, n2 = parabolic_search(point,t,d,cam1, cam2, ecran)
-# #                                # print(p_min[0],p_min[1],p_min[2],val_min,n1)
-# #                                point.pmin=p_min; point.valmin=val_min
-#
-#                                 show_point(point)
-#
-#                                 xdata = point.vecP[:,2]; ydata = point.vecV
-#                                 popt, pcov = curve_fit(func, xdata, ydata)
-#
-#                                 plt.figure()
-#                                 plt.plot(xdata, func(xdata,*popt), '-r')
-# #                                initialBreakpoints = [-18e-2]
-# #                                plt.plot( *SegmentedLinearReg( xdata, ydata, initialBreakpoints ), '-r' );
-#                                 plt.plot(xdata,ydata,'o')
-#                                 plt.show()
-#                                 ax.scatter(point.pmin[0], point.pmin[1], point.pmin[2],color="r")
-#                                 surf.good_points.append(point)
+# TRANCHES  ---------------------------------------------
+
+mean= np.mean(Z)
+std= np.std(Z)
+col="#8e82fe"
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+fig, ax = plt.subplots(figsize=(8, 3))
+fig.subplots_adjust(hspace=0)
+# ax.set_aspect(1.)
+ax.fill_between(np.linspace(pmin[0],pmax[0]), mean-std, mean+std, color=col, alpha=0.4)
+ax.plot( X, Z, 'k.')
+ax.set_xlabel('Largeur en x (cm)')
+divider = make_axes_locatable(ax)
+ax2 = divider.append_axes("right", 1.2, pad=0.1, sharey=ax)
+ax2.hist(Z, bins=50, orientation="horizontal", color=col, alpha=0.5)
+# make some labels invisible
+# ax2.xaxis.set_tick_params(labelbottom=False)
+ax2.yaxis.set_tick_params(labelleft=False)
+ax.set_ylabel('Hauteur en z (cm)')
+ax2.set_xlabel('Occurence')
+plt.tight_layout()
+plt.savefig('./fig/{}_hist_x.eps'.format(echantillon), format='eps')
+plt.show()
+
+
+fig, ax = plt.subplots(figsize=(8, 3))
+fig.subplots_adjust(hspace=0)
+# ax.set_aspect(1.)
+ax.fill_between(Y, mean-std, mean+std, color=col, alpha=0.4)
+ax.plot( Y, Z, 'k.')
+ax.set_xlabel('Largeur en y (cm)')
+divider = make_axes_locatable(ax)
+ax2 = divider.append_axes("right", 1.2, pad=0.1, sharey=ax)
+ax2.hist(Z, bins=50, orientation="horizontal", color=col, alpha=0.5)
+# make some labels invisible
+# ax2.xaxis.set_tick_params(labelbottom=False)
+ax2.yaxis.set_tick_params(labelleft=False)
+ax.set_ylabel('Hauteur en z (cm)')
+ax2.set_xlabel('Occurence')
+plt.tight_layout()
+plt.savefig('./fig/{}_hist_y.eps'.format(echantillon), format='eps')
+plt.show()
+
+
+fig, ax = plt.subplots()
+ax.plot( X, Z, 'k.', markersize='2')
+ax.set_ylabel('Hauteur en z \n (cm)')
+ax.set_xlabel('Largeur en x (cm)')
+ax.set_aspect('equal')
+plt.savefig('./fig/{}_tranche_x.eps'.format(echantillon), format='eps')
+plt.show()
+
+fig, ax = plt.subplots()
+ax.plot( Y, Z, 'k.', markersize='2')
+ax.set_ylabel('Hauteur en z \n (cm)')
+ax.set_xlabel('Largeur en y (cm)')
+ax.set_aspect('equal')
+plt.savefig('./fig/{}_tranche_y.eps'.format(echantillon), format='eps')
+plt.show()
+
+
+# INTERPOLATION --------------------------------------------------------
+from scipy.interpolate import griddata
+
+pts = np.vstack([X, Y]).T
+(grid_x, grid_y) = np.meshgrid(np.linspace(pmin[0],pmax[0],200),np.linspace(pmin[1],pmax[1],200) )
+grid_z2 = griddata(pts, Z, (grid_x, grid_y), method='cubic')
+fig,ax=plt.subplots(1,1)
+mycmap=plt.get_cmap('plasma')
+cp = ax.contourf(grid_x, grid_y, grid_z2-mean, cmap=mycmap)
+cbar = fig.colorbar(cp, label = 'Deviation par rapport à la moyenne (cm)')
+# Add a colorbar to a plot
+ax.set_xlabel('x (cm)'); ax.set_ylabel('y (cm)')
+plt.savefig('./fig/{}_heatmap.eps'.format(echantillon), format='eps')
+plt.show()
+
+# # TRISURF -----------------------------------
+import matplotlib.tri as mtri
+import scipy.spatial
+from matplotlib import cm
+# plot final solution
+
+pts = np.vstack([X, Y]).T
+tess = scipy.spatial.Delaunay(pts) # tessilation
+# Create the matplotlib Triangulation object
+xx = tess.points[:, 0]
+yy = tess.points[:, 1]
+tri = tess.vertices # or tess.simplices depending on scipy version
+triDat = mtri.Triangulation(x=pts[:, 0], y=pts[:, 1], triangles=tri)
+
+# # Trisurf :
+# fig = plt.figure(figsize=(6,6))
+# ax = fig.gca(projection='3d')
+# set_aspect_3D(pmin, pmax,ax)
+# ax.plot_trisurf(triDat, Z, linewidth=0, edgecolor='none',
+#                 antialiased=False, cmap=cm.jet)
+# # ax.scatter(x,y,z)
+# ax.set_title(r'trisurf with delaunay triangulation',
+#           fontsize=16, color='k')
+# ax.set_zlim3d(bottom=0)
 # plt.show()
+
+
+#
+# PLOTLYYYYY
+import plotly.figure_factory as FF
+import plotly.graph_objs as go
+simplices = tess.simplices
+fig = FF.create_trisurf(x=X, y=Y, z=Z,
+                         colormap=['rgb(50, 0, 75)', 'rgb(200, 0, 200)', '#c8dcc8'],
+                         height=800,width=1000,
+                         show_colorbar=True,
+                         simplices=simplices, title="Miroir plan",
+                         aspectratio=dict(x=1, y=1, z=0.3))
+fig.update_layout(showlegend=False)
+set_aspect_plotly(pmin,pmax, fig)
+fig.write_image("./fig/{}_surface.pdf".format(echantillon))
+# fig.show()
+
+
+
+#

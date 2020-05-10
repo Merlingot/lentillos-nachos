@@ -33,7 +33,7 @@ class Surface:
         # Points finaux de la grille
         self.x_f=None; self.y_f=None; self.z_f=None
 
-        # self.enr_points_initiaux()
+        self.enr_points_initiaux()
 
     def ajouter_point(self, point):
         self.points.append(point)

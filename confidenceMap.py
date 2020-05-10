@@ -14,7 +14,7 @@ def confidenceMap(sgmf, name):
     ## (1) read and extract the blue channel
     img = cv2.imread(sgmf)
     # uncomment for pre-blurring
-#    img = cv2.medianBlur(img,3)
+    # img = cv2.medianBlur(img,7)
 
 
     red = img[:,:,1]     # CHANNEL Y
@@ -48,35 +48,36 @@ def confidenceMap(sgmf, name):
     plt.imshow(maskimg)
     plt.show()
 
+    # maskimg = cv2.medianBlur(img,3)
     from scipy.ndimage import maximum_filter, minimum_filter
     def midpoint(img):
-        maxf = maximum_filter(img, (51, 51))
-        minf = minimum_filter(img, (51, 51))
+        maxf = maximum_filter(img, (4, 4))
+        minf = minimum_filter(img, (4, 4))
         midpoint = (maxf + minf) / 2
         midpoint[midpoint < 0] = 0
         return midpoint
     plt.imshow(midpoint(maskimg))
     plt.show()
 
-    # cv2.imwrite(name, midpoint(maskimg))
+    cv2.imwrite(name, midpoint(maskimg))
 
 
 
-echantillon = "miroir_plan"
-camera = "AV"
+echantillon = "lentille_plano_convexe"
+camera = "PG"
 confidenceMap('./data/'+ echantillon +'/cam_match_' + camera + '.png', './data/'+ echantillon +'/extremeconf_' + camera + '.png')
 #
 
 # apply medianBlur to SGMF
 
 
-sgmf1 = "./data/" + echantillon + "/cam_match_PG.png"
-sgmf2 = "./data/" + echantillon + "/cam_match_AV.png"
-
-window = 7
-
-blur1 = cv2.medianBlur(cv2.imread(sgmf1,-1),window)
-blur2 = cv2.medianBlur(cv2.imread(sgmf2,-1),window)
-
-cv2.imwrite("./data/" + echantillon + "/cam_match_median" + str(window) +"_PG.png", blur1)
-cv2.imwrite("./data/" + echantillon + "/cam_match_median" + str(window) +"_AV.png", blur2)
+# sgmf1 = "./data/" + echantillon + "/cam_match_PG.png"
+# sgmf2 = "./data/" + echantillon + "/cam_match_AV.png"
+#
+# window = 7
+#
+# blur1 = cv2.medianBlur(cv2.imread(sgmf1,-1),window)
+# blur2 = cv2.medianBlur(cv2.imread(sgmf2,-1),window)
+#
+# cv2.imwrite("./data/" + echantillon + "/cam_match_median" + str(window) +"_PG.png", blur1)
+# cv2.imwrite("./data/" + echantillon + "/cam_match_median" + str(window) +"_AV.png", blur2)

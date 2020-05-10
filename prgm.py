@@ -33,26 +33,47 @@ def search(surface, h, L, camR, cam, ecran):
         # Point initial de recherche (stenope)
         p=np.array([camR.S[0], camR.S[1], camR.S[2]])
         # Recherche du minimum :
-        succes, tup, _ = find_minimum(pixR, p, N, d, h, camR, cam, ecran)
+        succes1, tup1, _ = find_minimum(pixR, p, N, d, h, camR, cam, ecran)
         # Continuer avec le point étudié seulement si au moins un bon point:
-        if succes:
-            (p_min, val_min, n_min, vecV, vecP) = tup
-            # Faire le refine search
-            p_minus = p_min - h*d;
-            hr=h/80; Nr = int(2*h/hr)
-            succes_r, tup_r, tup_pix = find_minimum(pixR, p_minus, Nr ,d, hr, camR, cam, ecran)
-            if succes_r:
-                (p_min, val_min, n_min, vecV_r, vecP_r) = tup_r
-                (vecUR, vecER, vecU, vecE, vecEth) = tup_pix
-                # Enregistrer les resultats apres refine search
-                point = Point();
-                point.vecP=vecP; point.vecV=vecV #grossier
-                point.vecPr=vecP_r; point.vecVr=vecV_r #fin
-                point.pmin=p_min; point.valmin=val_min; point.nmin=n_min
-                point.vecUr=vecUR; point.vecEr=vecER
-                point.vecU=vecU; point.vecE=vecE; point.vecEth=vecEth
-
-                surface.ajouter_point(point)
+        if succes1:
+            (p_min, val_min, n_min, vecV1, vecP1) = tup1
+            if not (p_min[2]==vecP1[-1][2]): # Filtre pour les mauvais points
+                # Faire le refine search
+                p_minus = p_min - h*d;
+                h2=1e-3; N2 = int(2*h/h2)
+                succes2, tup2, _ = find_minimum(pixR, p_minus, N2 ,d, h2, camR, cam, ecran)
+                if succes2:
+                    (p_min, val_min, n_min, vecV2, vecP2) = tup2
+                    # Faire le refine search
+                    p_minus = p_min - h2*d;
+                    h3=25e-6; N3 = int(2*h2/h3)
+                    succes3, tup3, _ = find_minimum(pixR, p_minus, N3 ,d, h3, camR, cam, ecran)
+                    if succes3:
+                        (p_min, val_min, n_min, vecV3, vecP3) = tup3
+                        # Faire le refine search
+                        p_minus = p_min - h3*d;
+                        h4=1e-6; N4 = int(2*h3/h4)
+                        succes4, tup4, tup_pix = find_minimum(pixR, p_minus, N4 ,d, h4, camR, cam, ecran)
+                        if succes3:
+                            (p_min, val_min, n_min, vecV4, vecP4) = tup4
+                            (vecUR, vecER, vecU, vecE, vecEth) = tup_pix
+                            # Enregistrer les resultats apres refine search
+                            point = Point();
+                            point.vecP=vecP1; point.vecV=vecV1 #grossier
+                            point.vecPr=vecP2; point.vecVr=vecV2 #fin
+                            point.vecPrr=vecP3; point.vecVrr=vecV3 #tresfin
+                            point.vecPrrr=vecP4; point.vecVrrr=vecV4 #tres fin
+                            point.pmin=p_min; point.valmin=val_min; point.nmin=n_min
+                            point.vecUr=vecUR; point.vecEr=vecER
+                            point.vecU=vecU; point.vecE=vecE; point.vecEth=vecEth
+                            if succes4:
+                                p_minus = p_min - h4*d;
+                                h5=0.1e-6; N5 = int(2*h4/h5)
+                                _ , tup5, _ = find_minimum(pixR, p_minus, N4 ,d, h5, camR, cam, ecran)
+                                (p_min, val_min, n_min, vecV5, vecP5) = tup5
+                                point.pmin=p_min; point.valmin=val_min; point.nmin=n_min
+                                point.vecPs=vecP5; point.vecVs=vecV5
+                                surface.ajouter_point(point)
 
 
 def find_minimum(pixR, p, N, d, h, camR, cam, ecran):
