@@ -14,10 +14,8 @@ from nc import *
 from util import surface_refEcran, montage_refEcran, allo_refEcran,  show_sgmf, show_point
 import prgm
 
-
-
 # INITIALISATION       ------------------------------------------------
-# choisir l'échantillon à caractériser parmi la panoplie collector best of 2018-2020 "ah les années poly, c'était beau" :;
+# choisir l'échantillon à caractériser parmi la panoplie collector best of 2018-2020 "ah les années poly, c'était beau" :;)
 #lentille_anto, miroir_plan_anto, lentille_biconvexe, lentille_plano_convexe, miroir_plan
 echantillon = "miroir_plan"
 #NOUS -------------------------------------

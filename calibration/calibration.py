@@ -41,6 +41,8 @@ def takahashi(PATH, NB_CORNER_WIDTH, NB_CORNER_HEIGHT, squareSize, cam):
             k+=1
 
     objp = objp*squareSize
+    print(objp)
+    print(objp.shape)
 
     if len(fnames) > 0:
         # Intrinsic parameters
@@ -125,6 +127,8 @@ def intrinsic(NB_CORNER_WIDTH, NB_CORNER_HEIGHT, CHECKERBOARD, criteria, objp, f
     cv.destroyAllWindows()
     # ----------------------------
     ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    print(objpoints)
+    print(imgpoints)
 
     # Montrer axes ----------------------------------
     axis = np.float32([[3,0,0], [0,3,0], [0,0,3]]).reshape(-1,3)*l_pix*nb_pix
